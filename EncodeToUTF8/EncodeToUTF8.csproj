@@ -18,6 +18,10 @@
   <ItemGroup>
     <Resource Include="SplashImage\0.png" />
     <Resource Include="Profile.png" />
+    <None Remove="SplashImage\1.png" />
+    <Resource Include="SplashImage\1.png" />
+    <None Remove="SplashImage\2.png" />
+    <Resource Include="SplashImage\2.png" />
   </ItemGroup>
 
 </Project>
