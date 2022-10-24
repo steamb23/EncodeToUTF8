@@ -269,13 +269,20 @@ namespace SteamB23.EncodeToUTF8
             }
         }
 
+        private List<ViewWindow> viewWindows = new();
+
         private void EncodingDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (EncodingDataGrid.SelectedItem is not FileData fileData) return;
             // Process.Start("notepad.exe", fileData.FilePath);
             var viewWindow = new ViewWindow(fileData);
-            viewWindow.ShowDialog();
-            DataGridRefresh();
+            viewWindows.Add(viewWindow);
+            viewWindow.Show();
+            viewWindow.Closed += (o, args) =>
+            {
+                viewWindows.Remove(viewWindow);
+                DataGridRefresh();
+            };
         }
 
         private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
