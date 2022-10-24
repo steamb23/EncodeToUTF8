@@ -1,0 +1,51 @@
+﻿<Window x:Class="SteamB23.EncodeToUTF8.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:SteamB23.EncodeToUTF8"
+        mc:Ignorable="d"
+        Title="About" Height="350" Width="500" Topmost="True" WindowStartupLocation="CenterOwner"
+        ResizeMode="CanMinimize" Loaded="AboutWindow_OnLoaded">
+    <Grid>
+        <Image Source="/Profile.png" Stretch="Fill" Width="100" Height="100" VerticalAlignment="Top"
+               HorizontalAlignment="Left" Margin="10,10,0,0" />
+        <Grid Margin="115,0,0,73">
+            <TextBlock HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top"
+                       FontSize="24" Text="EncodeToUTF8" Grid.ColumnSpan="2" />
+            <TextBlock Name="VersionTextBlock" HorizontalAlignment="Left" Margin="10,47,0,0" TextWrapping="Wrap" VerticalAlignment="Top"
+                       Text="버전 정보" />
+            <RichTextBox Margin="10,68,10,10" IsReadOnly="True" HorizontalScrollBarVisibility="Auto"
+                         VerticalScrollBarVisibility="Auto">
+                <FlowDocument>
+                    <Paragraph>
+                        MIT License
+                        <LineBreak />
+                        Copyright (c) 2022 SteamB23
+                    </Paragraph>
+                    <Paragraph>
+                        Other Open sources:
+                        <LineBreak />
+                        - UTF.Unknown / MIT License
+                        <LineBreak />
+                        <Run Text=" " />
+                        <Hyperlink NavigateUri="https://github.com/CharsetDetector/UTF-unknown">https://github.com/CharsetDetector/UTF-unknown</Hyperlink>
+                        <LineBreak />
+                        - Windows API Code Pack / Microsoft License
+                        <LineBreak />
+                        <Run Text=" " />
+                        <Hyperlink  NavigateUri="https://github.com/bau-global/Windows-API-Code-Pack-1.1">https://github.com/bau-global/Windows-API-Code-Pack-1.1</Hyperlink>
+                        <LineBreak />
+                    </Paragraph>
+                </FlowDocument>
+            </RichTextBox>
+        </Grid>
+        <Grid Height="50" VerticalAlignment="Bottom">
+            <Grid.Background>
+                <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.MenuColorKey}}" />
+            </Grid.Background>
+            <Button Name="CloseButton" Content="닫기" Margin="0,10,10,10" Click="CloseButton_Click"
+                    HorizontalAlignment="Right" Width="80" />
+        </Grid>
+    </Grid>
+</Window>
