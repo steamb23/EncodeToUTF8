@@ -20,6 +20,11 @@ namespace SteamB23.EncodeToUTF8
             InitializeComponent();
         }
 
+        private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
+        {
+            SetTip(null);
+        }
+
         private List<FileData> fileDataList = new();
         private List<FileData> viewFileDataList = new();
         private bool taskSafeStop = false;
@@ -27,6 +32,8 @@ namespace SteamB23.EncodeToUTF8
         private Task? processTask = null;
 
         private readonly UTF8Encoding utf8Encoding = new UTF8Encoding(false);
+
+        private readonly List<ViewWindow> viewWindows = new();
 
         int processCount = 0;
 
@@ -40,8 +47,47 @@ namespace SteamB23.EncodeToUTF8
             Tip.Text = tip;
         }
 
+        #region 인코딩 분석
+
         private byte[] bomBytes = { 0xEF, 0xBB, 0xBF };
         private byte[] bomBuffer = new byte[3];
+
+        private void StartFileEncodingCheck(string[] files)
+        {
+            if (processTask != null)
+                return;
+
+            EncodingDataGrid.AllowDrop = false;
+            Cursor = Cursors.Wait;
+            Grid.IsEnabled = false;
+            SetTip("Ctrl + Q 키를 눌러서 분석을 중단할 수 있습니다.");
+
+            processTask = Task.Run(() =>
+            {
+                processCount = 0;
+                FileEncodingCheck(files, fileDataList);
+                // 중복 제거 작업
+                Dispatcher.Invoke(() => StatusText.Text = $"마무리하는 중...");
+                fileDataList = fileDataList.DistinctBy(fileData => fileData.FilePath).ToList();
+            });
+            //timer.Start();
+            processTask.GetAwaiter().OnCompleted(() =>
+            {
+                //timer.Stop();
+                Dispatcher.Invoke(() =>
+                {
+                    taskSafeStop = false;
+                    Grid.IsEnabled = true;
+                    EncodingDataGrid.AllowDrop = true;
+                    Cursor = Cursors.Arrow;
+                    StatusText.Text = $"완료";
+                    SetTip(null);
+                    DataGridRefresh();
+
+                    processTask = null;
+                });
+            });
+        }
 
         public void FileEncodingCheck(string[] filePaths, List<FileData> fileDataList)
         {
@@ -102,42 +148,9 @@ namespace SteamB23.EncodeToUTF8
             return new FileData(filePath, encoding, hasBom);
         }
 
-        private void StartFileEncodingCheck(string[] files)
-        {
-            if (processTask != null)
-                return;
+        #endregion
 
-            EncodingDataGrid.AllowDrop = false;
-            Cursor = Cursors.Wait;
-            Grid.IsEnabled = false;
-            SetTip("Ctrl + Q 키를 눌러서 분석을 중단할 수 있습니다.");
-
-            processTask = Task.Run(() =>
-            {
-                processCount = 0;
-                FileEncodingCheck(files, fileDataList);
-                // 중복 제거 작업
-                Dispatcher.Invoke(() => StatusText.Text = $"마무리하는 중...");
-                fileDataList = fileDataList.DistinctBy(fileData => fileData.FilePath).ToList();
-            });
-            //timer.Start();
-            processTask.GetAwaiter().OnCompleted(() =>
-            {
-                //timer.Stop();
-                Dispatcher.Invoke(() =>
-                {
-                    taskSafeStop = false;
-                    Grid.IsEnabled = true;
-                    EncodingDataGrid.AllowDrop = true;
-                    Cursor = Cursors.Arrow;
-                    StatusText.Text = $"완료";
-                    SetTip(null);
-                    DataGridRefresh();
-
-                    processTask = null;
-                });
-            });
-        }
+        #region EncodingDataGrid 관련 이벤트
 
         private void EncodingDataGrid_Drop(object sender, DragEventArgs e)
         {
@@ -165,12 +178,29 @@ namespace SteamB23.EncodeToUTF8
             EncodingDataGrid.ItemsSource = viewFileDataList;
         }
 
-        public void DataGridRefresh()
+        private void EncodingDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            viewFileDataList.Clear();
-            viewFileDataList.AddRange(fileDataList);
-            EncodingDataGrid.Items.Refresh();
-            TotalCountText.Text = $"대상 파일: {viewFileDataList.Count} 개";
+            if (EncodingDataGrid.SelectedItem is not FileData fileData) return;
+            // Process.Start("notepad.exe", fileData.FilePath);
+            var viewWindow = new ViewWindow(fileData);
+            viewWindows.Add(viewWindow);
+            viewWindow.Show();
+            viewWindow.Closed += (o, args) =>
+            {
+                if (isClosing) return;
+                viewWindows.Remove(viewWindow);
+                DataGridRefresh();
+            };
+        }
+
+        private void EncodingDataGrid_KeyUp(object sender, KeyEventArgs e)
+        {
+            switch (e.Key)
+            {
+                case Key.Delete:
+                    EncodingDataGridSelectedItemRemove();
+                    break;
+            }
         }
 
         private void DeleteMenuItem_Click(object sender, RoutedEventArgs e)
@@ -249,46 +279,17 @@ namespace SteamB23.EncodeToUTF8
             DataGridRefresh();
         }
 
-        private void Window_KeyUp(object sender, KeyEventArgs e)
+        public void DataGridRefresh()
         {
-            if (e.Key == Key.Q && Keyboard.Modifiers.HasFlag(ModifierKeys.Control) && processTask != null)
-            {
-                SetTip("작업을 중단중입니다.");
-                StatusText.Text = $"중단 중...";
-                taskSafeStop = true;
-            }
+            viewFileDataList.Clear();
+            viewFileDataList.AddRange(fileDataList);
+            EncodingDataGrid.Items.Refresh();
+            TotalCountText.Text = $"대상 파일: {viewFileDataList.Count} 개";
         }
 
-        private void EncodingDataGrid_KeyUp(object sender, KeyEventArgs e)
-        {
-            switch (e.Key)
-            {
-                case Key.Delete:
-                    EncodingDataGridSelectedItemRemove();
-                    break;
-            }
-        }
+        #endregion
 
-        private List<ViewWindow> viewWindows = new();
-
-        private void EncodingDataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            if (EncodingDataGrid.SelectedItem is not FileData fileData) return;
-            // Process.Start("notepad.exe", fileData.FilePath);
-            var viewWindow = new ViewWindow(fileData);
-            viewWindows.Add(viewWindow);
-            viewWindow.Show();
-            viewWindow.Closed += (o, args) =>
-            {
-                viewWindows.Remove(viewWindow);
-                DataGridRefresh();
-            };
-        }
-
-        private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
-        {
-            SetTip(null);
-        }
+        #region 버튼 클릭 이벤트
 
         private void FolderBrowseButton_Click(object sender, RoutedEventArgs e)
         {
@@ -324,5 +325,18 @@ namespace SteamB23.EncodeToUTF8
             };
             aboutWindow.ShowDialog();
         }
+
+        #endregion
+
+        private void Window_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Q && Keyboard.Modifiers.HasFlag(ModifierKeys.Control) && processTask != null)
+            {
+                SetTip("작업을 중단중입니다.");
+                StatusText.Text = $"중단 중...";
+                taskSafeStop = true;
+            }
+        }
+
     }
 }
