@@ -395,7 +395,7 @@ namespace SteamB23.EncodeToUTF8
         private async Task Convert()
         {
             BeginProcess();
-            SetTip("Ctrl + Q 키를 눌러서 분석을 중단할 수 있습니다.");
+            SetTip("Ctrl + Q 키를 눌러서 변환을 중단할 수 있습니다.");
             await Task.Run(async () =>
             {
                 var utf8Encoding = new UTF8Encoding(includeBom);
@@ -454,6 +454,12 @@ namespace SteamB23.EncodeToUTF8
             field = value;
             OnPropertyChanged(propertyName);
             return true;
+        }
+
+        private void ClearButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            fileDataList.Clear();
+            DataGridRefresh();
         }
     }
 }

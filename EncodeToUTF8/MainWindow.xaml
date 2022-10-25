@@ -52,6 +52,9 @@
             <Button x:Name="FileBrowseButton" Content="파일 찾기" HorizontalAlignment="Left" Margin="10,81,0,0"
                     VerticalAlignment="Top" Width="85"
                     Height="35" Click="FileBrowseButton_Click" ToolTip="파일을 찾습니다." />
+            <Button x:Name="ClearButton" Content="목록 비우기" HorizontalAlignment="Left" Margin="10,141,0,0"
+                    VerticalAlignment="Top" Width="85"
+                    Height="35" Click="ClearButton_OnClick" ToolTip="목록을 비웁니다." />
             <TextBlock Name="TotalCountText" HorizontalAlignment="Left" Margin="8,0,0,17" TextWrapping="Wrap"
                        Text="대상 파일: 0 개" Height="16" VerticalAlignment="Bottom" />
             <CheckBox x:Name="IncludeBOMCheckbox" Content="BOM 포함" Margin="0,0,123,20" Height="15"
