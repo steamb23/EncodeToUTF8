@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -28,6 +29,7 @@ namespace SteamB23.EncodeToUTF8
         private List<FileData> fileDataList = new();
         private List<FileData> viewFileDataList = new();
         private bool taskSafeStop = false;
+        private bool isClosing = false;
 
         private Task? processTask = null;
 
@@ -338,5 +340,13 @@ namespace SteamB23.EncodeToUTF8
             }
         }
 
+        private void MainWindow_OnClosing(object? sender, CancelEventArgs e)
+        {
+            isClosing = true;
+            foreach (var viewWindow in viewWindows)
+            {
+                viewWindow.Close();
+            }
+        }
     }
 }

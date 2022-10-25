@@ -8,7 +8,8 @@
     x:Class="SteamB23.EncodeToUTF8.MainWindow"
     mc:Ignorable="d"
     Title="EncodeToUTF8" Height="450" Width="800" MinHeight="300" MinWidth="600" KeyUp="Window_KeyUp"
-    Loaded="MainWindow_OnLoaded">
+    Loaded="MainWindow_OnLoaded"
+    Closing="MainWindow_OnClosing">
     <DockPanel>
         <StatusBar DockPanel.Dock="Bottom" Name="StatusBar">
             <StatusBarItem>
