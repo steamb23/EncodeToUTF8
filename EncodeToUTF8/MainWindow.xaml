@@ -7,7 +7,9 @@
     xmlns:Collections="clr-namespace:System.Collections;assembly=System.Runtime"
     x:Class="SteamB23.EncodeToUTF8.MainWindow"
     mc:Ignorable="d"
-    Title="EncodeToUTF8" Height="450" Width="800" MinHeight="300" MinWidth="600" KeyUp="Window_KeyUp"
+    Title="EncodeToUTF8" Height="450" Width="800" MinHeight="300" MinWidth="600"
+    WindowStartupLocation="CenterScreen"
+    KeyUp="Window_KeyUp"
     Loaded="MainWindow_OnLoaded"
     Closing="MainWindow_OnClosing">
     <DockPanel>
@@ -41,7 +43,8 @@
                                             IsReadOnly="True" />
                 </DataGrid.Columns>
             </DataGrid>
-            <Button x:Name="ConvertButton" Content="변환" Margin="0,0,10,10" HorizontalAlignment="Right" Width="92" Height="35"
+            <Button x:Name="ConvertButton" Content="변환" Margin="0,0,10,10" HorizontalAlignment="Right" Width="92"
+                    Height="35"
                     VerticalAlignment="Bottom" Click="ConvertButton_Click" />
             <Button x:Name="FolderBrowseButton" Content="폴더 찾기" HorizontalAlignment="Left" Margin="10,41,0,0"
                     VerticalAlignment="Top" Width="85"
@@ -51,8 +54,9 @@
                     Height="35" Click="FileBrowseButton_Click" ToolTip="파일을 찾습니다." />
             <TextBlock Name="TotalCountText" HorizontalAlignment="Left" Margin="8,0,0,17" TextWrapping="Wrap"
                        Text="대상 파일: 0 개" Height="16" VerticalAlignment="Bottom" />
-            <CheckBox x:Name="IncludeBOMCheckbox" Content="BOM 포함" Margin="0,0,123,20" Height="15" VerticalAlignment="Bottom"
-                      HorizontalAlignment="Right" HorizontalContentAlignment="Right" IsChecked="{Binding IncludeBom}"/>
+            <CheckBox x:Name="IncludeBOMCheckbox" Content="BOM 포함" Margin="0,0,123,20" Height="15"
+                      VerticalAlignment="Bottom"
+                      HorizontalAlignment="Right" HorizontalContentAlignment="Right" IsChecked="{Binding IncludeBom}" />
             <TextBlock Name="Tip" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text=""
                        VerticalAlignment="Top" />
             <Button x:Name="AboutButton" Content="정보" HorizontalAlignment="Left" Margin="10,0,0,50" Width="85"

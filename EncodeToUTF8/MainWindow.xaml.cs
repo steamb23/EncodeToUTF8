@@ -209,7 +209,10 @@ namespace SteamB23.EncodeToUTF8
         {
             if (EncodingDataGrid.SelectedItem is not FileData fileData) return;
             // Process.Start("notepad.exe", fileData.FilePath);
-            var viewWindow = new ViewWindow(fileData);
+            var viewWindow = new ViewWindow(fileData)
+            {
+                Owner = this
+            };
             viewWindows.Add(viewWindow);
             viewWindow.Show();
             viewWindow.Closed += (o, args) =>
