@@ -1,7 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -14,16 +17,30 @@ namespace SteamB23.EncodeToUTF8
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
         public MainWindow()
         {
             InitializeComponent();
         }
 
+
+        private bool includeBom = false;
+
+        public bool IncludeBom
+        {
+            get => includeBom;
+            set
+            {
+                includeBom = value;
+                OnPropertyChanged();
+            }
+        }
+
         private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
         {
             SetTip(null);
+            DataContext = this;
         }
 
         private List<FileData> fileDataList = new();
@@ -32,8 +49,6 @@ namespace SteamB23.EncodeToUTF8
         private bool isClosing = false;
 
         private Task? processTask = null;
-
-        private readonly UTF8Encoding utf8Encoding = new UTF8Encoding(false);
 
         private readonly List<ViewWindow> viewWindows = new();
 
@@ -54,14 +69,26 @@ namespace SteamB23.EncodeToUTF8
         private byte[] bomBytes = { 0xEF, 0xBB, 0xBF };
         private byte[] bomBuffer = new byte[3];
 
+        private void BeginProcess()
+        {
+            EncodingDataGrid.AllowDrop = false;
+            Cursor = Cursors.Wait;
+            Grid.IsEnabled = false;
+        }
+
+        private void EndProcess()
+        {
+            EncodingDataGrid.AllowDrop = true;
+            Cursor = Cursors.Arrow;
+            Grid.IsEnabled = true;
+        }
+
         private void StartFileEncodingCheck(string[] files)
         {
             if (processTask != null)
                 return;
 
-            EncodingDataGrid.AllowDrop = false;
-            Cursor = Cursors.Wait;
-            Grid.IsEnabled = false;
+            BeginProcess();
             SetTip("Ctrl + Q 키를 눌러서 분석을 중단할 수 있습니다.");
 
             processTask = Task.Run(() =>
@@ -79,9 +106,7 @@ namespace SteamB23.EncodeToUTF8
                 Dispatcher.Invoke(() =>
                 {
                     taskSafeStop = false;
-                    Grid.IsEnabled = true;
-                    EncodingDataGrid.AllowDrop = true;
-                    Cursor = Cursors.Arrow;
+                    EndProcess();
                     StatusText.Text = $"완료";
                     SetTip(null);
                     DataGridRefresh();
@@ -233,9 +258,7 @@ namespace SteamB23.EncodeToUTF8
 
         private async Task EncodingDataGridSelectedItemReAnalyze()
         {
-            EncodingDataGrid.AllowDrop = false;
-            Cursor = Cursors.Wait;
-            Grid.IsEnabled = false;
+            BeginProcess();
             SetTip("Ctrl + Q 키를 눌러서 분석을 중단할 수 있습니다.");
 
             processTask = Task.Run(() =>
@@ -269,9 +292,7 @@ namespace SteamB23.EncodeToUTF8
             await processTask;
 
             taskSafeStop = false;
-            Grid.IsEnabled = true;
-            EncodingDataGrid.AllowDrop = true;
-            Cursor = Cursors.Arrow;
+            EndProcess();
             StatusText.Text = $"완료";
             SetTip(null);
             DataGridRefresh();
@@ -285,6 +306,12 @@ namespace SteamB23.EncodeToUTF8
         {
             viewFileDataList.Clear();
             viewFileDataList.AddRange(fileDataList);
+            foreach (var column in EncodingDataGrid.Columns)
+            {
+                column.SortDirection = null;
+            }
+
+            EncodingDataGrid.Items.SortDescriptions.Clear();
             EncodingDataGrid.Items.Refresh();
             TotalCountText.Text = $"대상 파일: {viewFileDataList.Count} 개";
         }
@@ -347,6 +374,83 @@ namespace SteamB23.EncodeToUTF8
             {
                 viewWindow.Close();
             }
+        }
+
+        private void ConvertButton_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show(this,
+                "목록에 바이너리 파일이 포함되어 있지 않은지 확인해주세요.\n" +
+                "또한 백업되지 않은 파일이 영구적으로 손상될 수도 있습니다.",
+                "영구적 파일 수정 경고!", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
+            if (result != MessageBoxResult.OK)
+                return;
+#pragma warning disable CS4014
+            Convert();
+#pragma warning restore CS4014
+        }
+
+        private async Task Convert()
+        {
+            BeginProcess();
+            SetTip("Ctrl + Q 키를 눌러서 분석을 중단할 수 있습니다.");
+            await Task.Run(async () =>
+            {
+                var utf8Encoding = new UTF8Encoding(includeBom);
+                for (var i = 0; i < fileDataList.Count; i++)
+                {
+                    var iCopy = i;
+                    if (taskSafeStop)
+                    {
+                        break;
+                    }
+
+                    var fileData = fileDataList[i];
+                    Dispatcher.InvokeAsync(() => StatusText.Text = $"{iCopy + 1}개 변환 중: {fileData.FilePath}");
+                    if (fileData.Encoding == utf8Encoding)
+                        continue;
+
+                    try
+                    {
+                        var fileString = File.ReadAllTextAsync(fileData.FilePath, fileData.Encoding);
+                        await File.WriteAllTextAsync(fileData.FilePath, await fileString, utf8Encoding);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.WriteLine(e);
+                    }
+
+                    var newFileData = FileEncodingCheck(fileData.FilePath);
+                    if (newFileData != null)
+                    {
+                        fileData.Encoding = newFileData.Encoding;
+                        fileData.HasBOM = newFileData.HasBOM;
+                    }
+                }
+
+                Dispatcher.InvokeAsync(async () =>
+                {
+                    taskSafeStop = false;
+                    EndProcess();
+                    StatusText.Text = $"완료";
+                    SetTip(null);
+                    DataGridRefresh();
+                });
+            });
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        protected bool SetField<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+            field = value;
+            OnPropertyChanged(propertyName);
+            return true;
         }
     }
 }
