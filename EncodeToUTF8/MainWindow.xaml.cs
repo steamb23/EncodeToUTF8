@@ -12,6 +12,7 @@ using System.Windows.Input;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using UtfUnknown;
 
+#pragma warning disable CS4014
 namespace SteamB23.EncodeToUTF8
 {
     /// <summary>
@@ -387,9 +388,7 @@ namespace SteamB23.EncodeToUTF8
                 "영구적 파일 수정 경고!", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
             if (result != MessageBoxResult.OK)
                 return;
-#pragma warning disable CS4014
             Convert();
-#pragma warning restore CS4014
         }
 
         private async Task Convert()
@@ -409,7 +408,7 @@ namespace SteamB23.EncodeToUTF8
 
                     var fileData = fileDataList[i];
                     Dispatcher.InvokeAsync(() => StatusText.Text = $"{iCopy + 1}개 변환 중: {fileData.FilePath}");
-                    if (fileData.Encoding == utf8Encoding)
+                    if (Equals(fileData.Encoding, utf8Encoding))
                         continue;
 
                     try
@@ -430,7 +429,7 @@ namespace SteamB23.EncodeToUTF8
                     }
                 }
 
-                Dispatcher.InvokeAsync(async () =>
+                Dispatcher.InvokeAsync(() =>
                 {
                     taskSafeStop = false;
                     EndProcess();
