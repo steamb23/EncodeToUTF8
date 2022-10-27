@@ -11,7 +11,7 @@ namespace SteamB23.EncodeToUTF8
         /// <inheritdoc />
         App()
         {
-            var splash = new SplashScreen($"SplashImage/{Random.Shared.Next(0, 3)}.png");
+            var splash = new SplashScreen($"SplashImage/0.png");
             splash.Show(TimeSpan.FromSeconds(2));
         }
     }
